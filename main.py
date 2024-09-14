@@ -6,7 +6,7 @@ from openai import OpenAI
 
 # openai api key
 load_dotenv()
-client = OpenAI(api_key=os.getenv("OPENAI_KEY"))
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # read pdf
 def extract_text_from_pdf(pdf_path):
