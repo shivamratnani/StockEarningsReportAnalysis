@@ -1,10 +1,12 @@
 import os
 import re
 import PyPDF2
+from dotenv import load_dotenv
 from openai import OpenAI
 
 # openai api key
-client = OpenAI(api_key="sk-xiyvhsVBadZUSp-oAj_8qARlFe8qMn3RXZwbfr-ZVqT3BlbkFJKM4QoJ_AqRLOmr-oG_3QOIKqfmO_v027EDKYAZ7rEA")
+load_dotenv()
+client = OpenAI(api_key=os.getenv("OPENAI_KEY"))
 
 # read pdf
 def extract_text_from_pdf(pdf_path):
