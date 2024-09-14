@@ -20,10 +20,10 @@ def extract_text_from_pdf(pdf_path):
 # summarize earnings report using gpt-4o-mini
 def summarize_earnings_report(text):
     response = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-4-0125-preview",
         messages=[
             {"role": "system",
-             "content": "You are a financial analyst. Summarize the key points of this earnings call transcript."},
+             "content": "You are a financial analyst. Summarize the key points of this earnings call transcript in two paragraphs."},
             {"role": "user", "content": text}
         ]
     )
@@ -37,7 +37,7 @@ def summarize_qa_session(text):
             model="gpt-4-0125-preview",
             messages=[
                 {"role": "system",
-                 "content": "You are a financial analyst. Summarize the key points from this Q&A session of an earnings call."},
+                 "content": "You are a financial analyst. Summarize the key points from this Q&A session of an earnings call in two paragraphs."},
                 {"role": "user", "content": qa_section[0]}
             ]
         )
@@ -45,38 +45,176 @@ def summarize_qa_session(text):
     else:
         return "No Q&A session found in the transcript."
 
-# Self-analyzed functions
+
 def get_financial_results(text):
-    financial_results = re.findall(r'Revenue.*?[\d.]+\s*billion', text, re.IGNORECASE | re.DOTALL)
-    financial_results += re.findall(r'Net income.*?[\d.]+\s*billion', text, re.IGNORECASE | re.DOTALL)
-    financial_results += re.findall(r'EPS.*?[\d.]+', text, re.IGNORECASE)
-    return financial_results
+    patterns = [
+        r'Revenue.*?[\d.]+\s*(?:billion|million|B|M).*?(?<=\.)',
+        r'Net income.*?[\d.]+\s*(?:billion|million|B|M).*?(?<=\.)',
+        r'EPS.*?[\$]?[\d.]+.*?(?<=\.)',
+        r'Operating income.*?[\d.]+\s*(?:billion|million|B|M).*?(?<=\.)',
+        r'Gross margin.*?[\d.]+%.*?(?<=\.)'
+    ]
+    results = []
+    positive_keywords = ['increase', 'growth', 'improvement', 'positive']
+    negative_keywords = ['decrease', 'decline', 'drop', 'negative']
+    positive_count = 0
+    negative_count = 0
+
+    for pattern in patterns:
+        matches = re.findall(pattern, text, re.IGNORECASE | re.DOTALL)
+        for match in matches:
+            if any(word in match.lower() for word in positive_keywords):
+                positive_count += 1
+            elif any(word in match.lower() for word in negative_keywords):
+                negative_count += 1
+            results.append(match)
+
+    if positive_count > negative_count:
+        overall_sentiment = "Overall: Positive Analysis"
+    elif negative_count > positive_count:
+        overall_sentiment = "Overall: Negative Analysis"
+    else:
+        overall_sentiment = "Overall: Indifferent"
+
+    results.append(overall_sentiment)
+    return results
 
 def get_strategic_initiatives(text):
-    initiatives = re.findall(r'strategic.*?\.', text, re.IGNORECASE | re.DOTALL)
+    initiatives = re.findall(r'(?:strategic|initiative|plan).*?(?<=\.)', text, re.IGNORECASE | re.DOTALL)
+    positive_keywords = ['success', 'growth', 'positive', 'improvement']
+    negative_keywords = ['failure', 'decline', 'negative', 'problem']
+    positive_count = 0
+    negative_count = 0
+
+    for item in initiatives:
+        if any(word in item.lower() for word in positive_keywords):
+            positive_count += 1
+        elif any(word in item.lower() for word in negative_keywords):
+            negative_count += 1
+
+    if positive_count > negative_count:
+        overall_sentiment = "Overall: Positive Analysis"
+    elif negative_count > positive_count:
+        overall_sentiment = "Overall: Negative Analysis"
+    else:
+        overall_sentiment = "Overall: Indifferent"
+
+    initiatives.append(overall_sentiment)
     return initiatives
 
 def get_performance_analysis(text):
-    analysis = re.findall(r'performance.*?\.', text, re.IGNORECASE | re.DOTALL)
+    analysis = re.findall(r'(?:performance|growth|decline).*?(?<=\.)', text, re.IGNORECASE | re.DOTALL)
+    positive_keywords = ['growth', 'increase', 'improvement', 'positive']
+    negative_keywords = ['decline', 'decrease', 'drop', 'negative']
+    positive_count = 0
+    negative_count = 0
+
+    for item in analysis:
+        if any(word in item.lower() for word in positive_keywords):
+            positive_count += 1
+        elif any(word in item.lower() for word in negative_keywords):
+            negative_count += 1
+
+    if positive_count > negative_count:
+        overall_sentiment = "Overall: Positive Analysis"
+    elif negative_count > positive_count:
+        overall_sentiment = "Overall: Negative Analysis"
+    else:
+        overall_sentiment = "Overall: Indifferent"
+
+    analysis.append(overall_sentiment)
     return analysis
 
 def get_operational_updates(text):
-    updates = re.findall(r'operational.*?\.', text, re.IGNORECASE | re.DOTALL)
+    updates = re.findall(r'(?:operational|operations|business).*?(?<=\.)', text, re.IGNORECASE | re.DOTALL)
+    positive_keywords = ['growth', 'increase', 'improvement', 'positive']
+    negative_keywords = ['decline', 'decrease', 'drop', 'negative']
+    positive_count = 0
+    negative_count = 0
+
+    for item in updates:
+        if any(word in item.lower() for word in positive_keywords):
+            positive_count += 1
+        elif any(word in item.lower() for word in negative_keywords):
+            negative_count += 1
+
+    if positive_count > negative_count:
+        overall_sentiment = "Overall: Positive Analysis"
+    elif negative_count > positive_count:
+        overall_sentiment = "Overall: Negative Analysis"
+    else:
+        overall_sentiment = "Overall: Indifferent"
+
+    updates.append(overall_sentiment)
     return updates
 
 def get_capital_allocation(text):
-    allocation = re.findall(r'capital.*?\.', text, re.IGNORECASE | re.DOTALL)
-    allocation += re.findall(r'dividend.*?\.', text, re.IGNORECASE | re.DOTALL)
+    allocation = re.findall(r'(?:capital|dividend|buyback|investment).*?(?<=\.)', text, re.IGNORECASE | re.DOTALL)
+    positive_keywords = ['increase', 'growth', 'positive', 'improvement']
+    negative_keywords = ['decrease', 'decline', 'drop', 'negative']
+    positive_count = 0
+    negative_count = 0
+
+    for item in allocation:
+        if any(word in item.lower() for word in positive_keywords):
+            positive_count += 1
+        elif any(word in item.lower() for word in negative_keywords):
+            negative_count += 1
+
+    if positive_count > negative_count:
+        overall_sentiment = "Overall: Positive Analysis"
+    elif negative_count > positive_count:
+        overall_sentiment = "Overall: Negative Analysis"
+    else:
+        overall_sentiment = "Overall: Indifferent"
+
+    allocation.append(overall_sentiment)
     return allocation
 
 def get_risks_and_problems(text):
-    risks = re.findall(r'risk.*?\.', text, re.IGNORECASE | re.DOTALL)
-    risks += re.findall(r'challenge.*?\.', text, re.IGNORECASE | re.DOTALL)
+    risks = re.findall(r'(?:risk|challenge|problem|issue).*?(?<=\.)', text, re.IGNORECASE | re.DOTALL)
+    positive_keywords = ['mitigated', 'resolved', 'positive', 'improvement']
+    negative_keywords = ['risk', 'challenge', 'problem', 'issue']
+    positive_count = 0
+    negative_count = 0
+
+    for item in risks:
+        if any(word in item.lower() for word in positive_keywords):
+            positive_count += 1
+        elif any(word in item.lower() for word in negative_keywords):
+            negative_count += 1
+
+    if positive_count > negative_count:
+        overall_sentiment = "Overall: Positive Analysis"
+    elif negative_count > positive_count:
+        overall_sentiment = "Overall: Negative Analysis"
+    else:
+        overall_sentiment = "Overall: Indifferent"
+
+    risks.append(overall_sentiment)
     return risks
 
 def get_sustainability(text):
-    sustainability = re.findall(r'sustainability.*?\.', text, re.IGNORECASE | re.DOTALL)
-    sustainability += re.findall(r'ESG.*?\.', text, re.IGNORECASE | re.DOTALL)
+    sustainability = re.findall(r'(?:sustainability|ESG|environmental|social|governance).*?(?<=\.)', text, re.IGNORECASE | re.DOTALL)
+    positive_keywords = ['improvement', 'positive', 'growth', 'increase']
+    negative_keywords = ['decline', 'negative', 'problem', 'issue']
+    positive_count = 0
+    negative_count = 0
+
+    for item in sustainability:
+        if any(word in item.lower() for word in positive_keywords):
+            positive_count += 1
+        elif any(word in item.lower() for word in negative_keywords):
+            negative_count += 1
+
+    if positive_count > negative_count:
+        overall_sentiment = "Overall: Positive Analysis"
+    elif negative_count > positive_count:
+        overall_sentiment = "Overall: Negative Analysis"
+    else:
+        overall_sentiment = "Overall: Indifferent"
+
+    sustainability.append(overall_sentiment)
     return sustainability
 
 def main():
